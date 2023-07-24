@@ -1,0 +1,110 @@
+Seamus Stein
+QBS 103
+
+Presentation 1
+
+```{r}
+setwd("/Users/seamus/QBS_103_Project/QBS_103_Data")
+
+gene_expression <- read.csv(file = "QBS103_finalProject_geneExpression.csv", row.names = 1)
+
+meta_data <- read.csv(file = "QBS103_finalProject_metadata.csv", row.names = 1)
+
+# subset APOM_expression data. 
+APOM_expression <- gene_expression["APOM",]
+# apply transform to make the rows into colmnns 
+APOM_expression <- as.data.frame(t(APOM_expression))
+head(APOM_expression)
+```
+
+
+``` {r}
+# Link metadata to APOM gene expression data
+metadata_APOM_expression <- cbind(meta_data, APOM_expression)
+head(metadata_APOM_expression)
+```
+```{r}
+summary(metadata_APOM_expression)
+```
+
+Using ggplot2 generate the following plots for your covariates of choice
+
+a) Histogram for gene expression
+```{r}
+library(tidyverse)
+myTheme <- theme(
+  panel.border = element_blank(), panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(), 
+  # define axis
+  axis.line = element_line(colour = "black", linewidth = rel(1)),
+  # plot background
+  plot.background = element_rect(fill = "white"),
+  panel.background = element_blank(),
+  legend.key = element_rect(fill = 'white'), 
+  # Move legend
+  legend.position = 'right',
+  
+  # font
+  text = element_text(family = 'Georgia', size = 14 ) 
+)
+```
+
+```{r}
+colorPalette<- c('#FCDCDC')
+
+ggplot(metadata_APOM_expression, aes(x = APOM)) +
+  geom_histogram(binwidth = 1, col = 'black', fill = colorPalette ) +
+  ggtitle("Histogram of APOM expression") +
+  labs(x = "APOM Expression", y = "Frequency") +
+  myTheme
+```
+b) Scatter plot for gene expression and continuous covariate Age
+
+```{r}
+# convert character age to numberic
+metadata_APOM_expression$age <- as.numeric(metadata_APOM_expression$age)
+head(metadata_APOM_expression)
+```
+```{r}
+# scatter plot for gene expression and age
+ggplot(metadata_APOM_expression, aes(x = age, y = APOM)) +
+  geom_point(color = "navy") +
+  labs(x = "Age (years)", y = "APOM Expression") +
+  ggtitle("APOM Expression by Age") +
+  myTheme
+```
+c) Boxplot of gene expression separated by both categorical covariates 
+Categorical covariates: Sex, icu_status
+```{r}
+# convert unknown sex to NA
+#metadata_APOM_expression$sex[metadata_APOM_expression$sex == "unknown"] <- NA
+#data <- metadata_APOM_expression[if_else(metadata_APOM_expression$sex == "unknown", NA, )]
+head(metadata_APOM_expression)
+#summary(metadata_APOM_expression$sex)
+```
+```{r}
+# convert unknown sex to NA
+metadata_APOM_expression$sex <- if_else(metadata_APOM_expression$sex == " unknown", NA, metadata_APOM_expression$sex)
+
+```
+
+
+```{r}
+#APOM_no_unknown <- metadata_APOM_expression %>% 
+ # filter(!grepl('unknown', sex))
+#[!(metadata_APOM_expression$sex =="unknown"),]
+APOM <- metadata_APOM_expression %>% 
+      filter(!is.na(sex))
+```
+
+```{r}
+colorPalette2 <- c("#db6d00", "#B6DBFF")
+
+ggplot(APOM, aes(x = icu_status, y = APOM, fill = sex)) + 
+  geom_boxplot() +
+  scale_x_discrete(labels = c("Not Admitted", "Admitted")) +
+  labs(x = "ICU Status", y = "APOM expression") +
+  scale_fill_manual(values = colorPalette2) +
+  ggtitle("APOM Exprsession by ICU Status and Sex") +
+  myTheme
+```
