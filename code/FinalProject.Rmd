@@ -1,7 +1,7 @@
 # Seamus Stein
-## QBS 103
-## Presentation 1
-## July 25
+### QBS 103
+### Presentation 1
+### July 25
 
 ```{r}
 # set working directory to data folder
@@ -109,6 +109,6 @@ ggplot(APOM_clean, aes(x = icu_status, y = APOM, fill = sex)) +
 ```
 
 
-## APOM Gene information
+### APOM Gene information
 
 The APOM gene encodes a protein that is an apolipoprotein. The encoded protein is secreted through the plasma membrane but remains membrane-bound. It functions in the transportation of lipids.   
