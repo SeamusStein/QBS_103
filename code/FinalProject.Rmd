@@ -120,18 +120,26 @@ The APOM gene encodes a protein that is an apolipoprotein. The encoded protein i
 x=expression(paste("X comes from ",italic("normal distribution"))))
 expression(~italic(APOM)~)
 
+ substitute(paste(italic('X Label')
+ 
 ```{r}
 createHistogram <- function(df, gene) {
         gene_label <- gene
+        print(gene_label)
         histogram <-  ggplot(df, aes(x = .data[[gene]])) +
                 geom_histogram(binwidth = 1, col = 'black', fill = colorPalette ) +
-                ggtitle(expression(paste("Histogram of ", italic(gene_label), " Expression"))) +
+                ggtitle(paste("Histogram of ", expression(~italics(gene_label)), " Expression"))+
                 labs(x =paste(gene_label," Expression"), y = "Frequency") +
                 myTheme
   histogram 
 }
 
 ```
+
+```{r}
+createHistogram(APOM_clean, "APOM")
+```
+
 ```{r}
 word <- 'italics'
 plottitle2 <- expression(paste('Example map with ', italic(word)))
@@ -175,10 +183,7 @@ createScatterplot(APOM_clean, "APOM", "age", "Age (years)", "Age")
 ```
 
 
-```{r}
-createHistogram(APOM_clean, "APOM")
-```
-Subset more than Multiple genes for analysis
+Subset multiple genes for analysis
 
 ```{r}
 # subset multiple genes data. 
@@ -215,15 +220,21 @@ head(gene_clean)
 ```
 
 ```{r}
-# 1 cont  2 categorical
+# This function makes the plots and takes in a vector of 1 continuous variable
+# and a vector of 2 categorical variables
+
 makePlots <- function(df, geneNames, x_Cont, xCat) {
+  #the x axis categorical variable in box plot
   x_cat <- xCat[1]
+  # the categorical variable indicated by color fill
   cat_col = xCat[2]
   
+  # create the plots
   myHist <- createHistogram(df, geneNames)
   myScatter <- createScatterplot(df, geneNames, x_Cont, "Age (years)", "Age")
   myBox <- createBoxplot(df, geneNames, x_cat, cat_col, "Not Admited", "Admitted","ICU Status", "Sex")
   
+  #store the plots in a list
  plots <- list(myBox, myHist, myScatter)
  #plots <-ggpubr::ggarrange(myBox, myHist, myScatter, common.legend = F,nrow = 2,ncol = 2,
      #             labels = c("A","B", "C" ))
@@ -235,20 +246,19 @@ makePlots <- function(df, geneNames, x_Cont, xCat) {
 ```{r}
 categorical <- c("icu_status", "sex")
 cont <- c("age")
-
-makePlots(gene_clean, "APOA2", cont, categorical)
-
-
-
-
-
-#buildPlots()
+geneNames <- c("APOM","LCN2", "APOA2")
 ```
 
-buildPlots <- function(df, i, geneNames, xCat,conVar, catVar, xaxis, colorCatVar) {
-   for i in geneNames {
-    # createScatterplot(df, i, conVar, xaxis, var_name)
-      createHistogram(df, i)
-     # createBoxplot(df, i ,xCat, colorCatVar)
-    }
+
+```{r}
+par(mfrow = c(3,3))
+# loop through the gene names and print all of the plots using makePlots function
+#gene_plots <- c()
+
+for(item in 1:length(geneNames)){
+  gene_plots <- makePlots(gene_clean, geneNames[item], cont, categorical)
+  print(gene_plots)
 }
+#ggpubr::ggarrange(gene_plots[1], gene_plots[2])
+#makePlots(gene_clean, "APOA2", cont, categorical)
+```
