@@ -45,7 +45,10 @@ myTheme <- theme(
   legend.position = 'right',
   
   # font
-  text = element_text(family = 'Georgia', size = 14 ) 
+  text = element_text(family = 'Georgia', size = 14 ), 
+  
+  # center titles
+  plot.title = element_text(hjust = 0.5)
 )
 ```
 
@@ -56,8 +59,8 @@ colorPalette<- c('#FCDCDC')
 # plot histogram of APOM expression 
 ggplot(metadata_APOM_expression, aes(x = APOM)) +
   geom_histogram(binwidth = 1, col = 'black', fill = colorPalette ) +
-  ggtitle("Histogram of APOM expression") +
-  labs(x = "APOM Expression", y = "Frequency") +
+  ggtitle(expression("Histogram of "~italic(APOM)~ " expression")) +
+  labs(x = expression(~italic(APOM)~ " Expression"), y = "Frequency") +
   myTheme
 ```
 
@@ -72,8 +75,8 @@ head(metadata_APOM_expression)
 # scatter plot for gene expression and age
 ggplot(metadata_APOM_expression, aes(x = age, y = APOM)) +
   geom_point(color = "navy") +
-  labs(x = "Age (years)", y = "APOM Expression") +
-  ggtitle("APOM Expression by Age") +
+  labs(x = "Age (years)", y = expression(~italic(APOM)~ "Expression")) +
+  ggtitle(expression(~italic(APOM)~ " Expression by Age")) +
   myTheme
 ```
 
@@ -100,15 +103,152 @@ colorPalette2 <- c("#db6d00", "#B6DBFF")
 
 # create box plot of gene expression separated by ICU status and sex
 ggplot(APOM_clean, aes(x = icu_status, y = APOM, fill = sex)) + 
-  geom_boxplot() +
+  geom_boxplot(outlier.shape = NA) +
+  geom_point(position = position_jitterdodge(0.2))+
+  #geom_jitter() +
   scale_x_discrete(labels = c("Not Admitted", "Admitted")) +
-  labs(x = "ICU Status", y = "APOM expression") +
+  labs(x = "ICU Status", y = expression(~italic(APOM)~ " Expression")) +
   scale_fill_manual(values = colorPalette2) +
-  ggtitle("APOM Exprsession by ICU Status and Sex") +
+  ggtitle(expression(~italic(APOM)~ " Exprsession by ICU Status and Sex")) +
   myTheme
 ```
 
 
 ### APOM Gene information
 
-The APOM gene encodes a protein that is an apolipoprotein. The encoded protein is secreted through the plasma membrane but remains membrane-bound. It functions in the transportation of lipids.   
+The APOM gene encodes a protein that is an apolipoprotein. The encoded protein is secreted through the plasma membrane but remains membrane-bound. It functions in the transportation of lipids. 
+x=expression(paste("X comes from ",italic("normal distribution"))))
+expression(~italic(APOM)~)
+
+```{r}
+createHistogram <- function(df, gene) {
+        gene_label <- gene
+        histogram <-  ggplot(df, aes(x = .data[[gene]])) +
+                geom_histogram(binwidth = 1, col = 'black', fill = colorPalette ) +
+                ggtitle(expression(paste("Histogram of ", italic(gene_label), " Expression"))) +
+                labs(x =paste(gene_label," Expression"), y = "Frequency") +
+                myTheme
+  histogram 
+}
+
+```
+```{r}
+word <- 'italics'
+plottitle2 <- expression(paste('Example map with ', italic(word)))
+print(plottitle2)
+```
+
+```{r}
+createScatterplot <- function(df, gene, conVar, xaxis, var_name) {
+  gene_label <- gene
+  scatter_plot <- ggplot(df, aes(x = .data[[conVar]], y = .data[[gene]])) +
+                  geom_point(color = "navy") +
+                  labs(x = xaxis,  y = paste(gene_label, " Expression")) +
+                  ggtitle(paste(gene_label, " Expression by",var_name)) +
+                  myTheme
+  
+  scatter_plot
+}
+```
+
+```{r}
+createBoxplot <- function(df, gene, xCat, colorCatVar, tick_label_1, tick_label_2, x_catLabel, x_filll_label) {
+  gene_label <-gene
+  myBoxplot <- ggplot(df, aes(x = .data[[xCat]], y = .data[[gene]], fill = .data[[colorCatVar]])) + 
+               geom_boxplot(outlier.shape = NA) +
+               geom_point(position = position_jitterdodge(0.2))+
+               scale_x_discrete(labels = c(tick_label_1, tick_label_2)) +
+               labs(x = x_catLabel, y = paste(gene_label," Expression")) +
+               scale_fill_manual(values = colorPalette2) +
+               ggtitle(paste(gene_label, " Exprsession by ",x_catLabel, "and ", x_filll_label)) +
+               myTheme
+  myBoxplot
+}
+```
+
+```{r}
+createBoxplot(APOM_clean, "APOM", "icu_status", "sex", "Not Admited", "Admitted","ICU Status", "Sex")
+```
+
+```{r}
+createScatterplot(APOM_clean, "APOM", "age", "Age (years)", "Age")
+```
+
+
+```{r}
+createHistogram(APOM_clean, "APOM")
+```
+Subset more than Multiple genes for analysis
+
+```{r}
+# subset multiple genes data. 
+gene_subset <- gene_expression[c("APOM", "APOA2","LCN2"),]
+# apply transform to make the rows into colmnns 
+gene_subset <- as.data.frame(t(gene_subset))
+head(gene_subset)
+```
+
+```{r}
+# Link metadata to gene subset data
+metadata_gene_expression <- cbind(meta_data, gene_subset)
+head(metadata_gene_expression)
+```
+```{r}
+# convert unknown sex to NA
+metadata_gene_expression$sex <- if_else(metadata_gene_expression$sex == " unknown", NA, metadata_gene_expression$sex)
+
+```
+
+```{r}
+# convert character age to numeric
+metadata_gene_expression$age <- as.numeric(metadata_APOM_expression$age)
+head(metadata_gene_expression)
+```
+
+
+```{r}
+# clean the data by filtering so sex has no NA
+gene_clean <- metadata_gene_expression %>% 
+      filter(!is.na(sex))
+
+head(gene_clean)
+```
+
+```{r}
+# 1 cont  2 categorical
+makePlots <- function(df, geneNames, x_Cont, xCat) {
+  x_cat <- xCat[1]
+  cat_col = xCat[2]
+  
+  myHist <- createHistogram(df, geneNames)
+  myScatter <- createScatterplot(df, geneNames, x_Cont, "Age (years)", "Age")
+  myBox <- createBoxplot(df, geneNames, x_cat, cat_col, "Not Admited", "Admitted","ICU Status", "Sex")
+  
+ plots <- list(myBox, myHist, myScatter)
+ #plots <-ggpubr::ggarrange(myBox, myHist, myScatter, common.legend = F,nrow = 2,ncol = 2,
+     #             labels = c("A","B", "C" ))
+ plots
+}
+```
+
+
+```{r}
+categorical <- c("icu_status", "sex")
+cont <- c("age")
+
+makePlots(gene_clean, "APOA2", cont, categorical)
+
+
+
+
+
+#buildPlots()
+```
+
+buildPlots <- function(df, i, geneNames, xCat,conVar, catVar, xaxis, colorCatVar) {
+   for i in geneNames {
+    # createScatterplot(df, i, conVar, xaxis, var_name)
+      createHistogram(df, i)
+     # createBoxplot(df, i ,xCat, colorCatVar)
+    }
+}
