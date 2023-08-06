@@ -3,6 +3,10 @@
 ### Presentation 1
 ### July 25
 
+### APOM Gene information
+
+The APOM gene encodes a protein that is an apolipoprotein. The encoded protein is secreted through the plasma membrane but remains membrane-bound. It functions in the transportation of lipids. 
+
 ```{r}
 # set working directory to data folder
 setwd("/Users/seamus/QBS_103_Project/QBS_103/QBS_103_Data")
@@ -97,6 +101,8 @@ APOM_clean <- metadata_APOM_expression %>%
       filter(!is.na(sex))
 ```
 
+
+
 ```{r}
 #define color pallete for box plot
 colorPalette2 <- c("#db6d00", "#B6DBFF")
@@ -114,23 +120,91 @@ ggplot(APOM_clean, aes(x = icu_status, y = APOM, fill = sex)) +
 ```
 
 
-### APOM Gene information
-
-The APOM gene encodes a protein that is an apolipoprotein. The encoded protein is secreted through the plasma membrane but remains membrane-bound. It functions in the transportation of lipids. 
 x=expression(paste("X comes from ",italic("normal distribution"))))
 expression(~italic(APOM)~)
 
+# Presentation 2
+
  substitute(paste(italic('X Label')
+ paste("Histogram of ", expression(~italics(gene_label)), " Expression")
  
 ```{r}
+f <- function(argX) {
+   list(quote(argX), 
+        substitute(argX), 
+        expression(italics(argX)))
+}
+   
+suppliedArgX <- "APOM"
+f(argX = suppliedArgX)
+```
+
+```{r}
+ps=c(1,2,3)
+layout(matrix(1:3,1,3))
+for(i in 1:3){
+    plot(1,1,main=substitute(paste(italic(p), " = 0.", x, sep=""), list(x=ps[i])))
+}
+```
+ 
+```{r}
+# create labels
+#italic_label <- function(gene){
+#  coverted_label <- paste(" ",expression(italic(gene)))
+  
+#  coverted_label
+#}
+
+#expression(italics(get(gene_label)))
+
+#gene <- "APOM"
+#typeof(gene)
+#x <- expression(italics(gene))
+#x <- as.character(x)
+#typeof(x)
+#x
+#print(expression(italic_label(get(gene_label))))
+#print(italic_label(get(gene_label)))
+#gene_label <- c('APOM')
+#gene_label[1]
+#italic_word <-bquote(italic(.(word)))
+
+#labNames <- c('xLab','Histogram of ', "Expression")
+#gene_word <- c(gene_label[1])
+
+#my_title <- eval(bquote(expression(.(labNames[2]) ~ italic(.(gene_word[1])) ~ .(labNames[3]))))
+#my_x <- eval(bquote(expression(~ italic(.(gene_word[1])) ~ .(labNames[3]))))
+# Calling bquote() Function
+
+  
+# Calling bquote() Function
+#bquote(function(x, y = .(z)) x + y)
+  
+# Plotting a graph with the default value
+#plot(1:10, z+(1:10), main = bquote(.(z)))
+
+#substitute('Example map with' ~italic(x), list(x=word))
+#my_xlab <- expression(paste(gene_label," Expression"))
+
+```
+
+```{r}
 createHistogram <- function(df, gene) {
-        gene_label <- gene
-        print(gene_label)
+    gene_label <- c(gene)
+    labNames <- c('xLab','Histogram of ', "Expression")
+    gene_word <- c(gene_label[1])
+
+    my_title <- eval(bquote(expression(.(labNames[2]) ~ italic(.(gene_word[1])) ~ .(labNames[3]))))
+    my_x <- eval(bquote(expression(~ italic(.(gene_word[1])) ~ .(labNames[3]))))
+    #my_title <- expression(paste("Histogram of ", italic(.data[gene]), " Expression"))
+       #assign(gene_label, gene)
+       # print(gene_label)
+       # print(typeof(gene_label))
         histogram <-  ggplot(df, aes(x = .data[[gene]])) +
-                geom_histogram(binwidth = 1, col = 'black', fill = colorPalette ) +
-                ggtitle(paste("Histogram of ", expression(~italics(gene_label)), " Expression"))+
-                labs(x =paste(gene_label," Expression"), y = "Frequency") +
-                myTheme
+                      geom_histogram(binwidth = 1, col = 'black', fill = colorPalette ) +
+                      #ggtitle(expression(paste("Histogram of ",eval(bquote((.(gene)))), " Expression")))+
+                      labs(x = my_x, y = "Frequency", title = my_title) + # title = paste(gene_label, "Expression"))+   #, title = my_title) +
+                     myTheme  #x=paste(gene_label," Expression")
   histogram 
 }
 
@@ -140,19 +214,22 @@ createHistogram <- function(df, gene) {
 createHistogram(APOM_clean, "APOM")
 ```
 
-```{r}
-word <- 'italics'
-plottitle2 <- expression(paste('Example map with ', italic(word)))
-print(plottitle2)
-```
 
 ```{r}
 createScatterplot <- function(df, gene, conVar, xaxis, var_name) {
-  gene_label <- gene
+    gene_label <- c(gene)
+    labNames <- c(var_name,'by ', "Expression")
+    gene_word <- c(gene_label[1])
+
+    my_title <- eval(bquote(expression(~italic(.(gene_word[1])) ~ .(labNames[3]) ~ .(labNames[2])
+                                       ~ .(labNames[1]))))
+    
+    my_y <- eval(bquote(expression(~ italic(.(gene_word[1])) ~ .(labNames[3]))))
+    
   scatter_plot <- ggplot(df, aes(x = .data[[conVar]], y = .data[[gene]])) +
                   geom_point(color = "navy") +
-                  labs(x = xaxis,  y = paste(gene_label, " Expression")) +
-                  ggtitle(paste(gene_label, " Expression by",var_name)) +
+                  labs(x = xaxis,  y = my_y, title = my_title) +
+                  #ggtitle(paste(gene_label, " Expression by",var_name)) +
                   myTheme
   
   scatter_plot
@@ -161,14 +238,23 @@ createScatterplot <- function(df, gene, conVar, xaxis, var_name) {
 
 ```{r}
 createBoxplot <- function(df, gene, xCat, colorCatVar, tick_label_1, tick_label_2, x_catLabel, x_filll_label) {
-  gene_label <-gene
+  gene_label <- c(gene)
+  gene_word <- c(gene_label[1])
+  labNames <- c("Expression", "by", x_catLabel, "and", x_filll_label)
+  
+  my_title <- eval(bquote(expression(~italic(.(gene_word[1])) ~ .(labNames[1]) ~ .(labNames[2])
+                                       ~ .(labNames[3]) ~ .(labNames[4]) ~ .(labNames[5]))))
+  
+  y_axis_title <- eval(bquote(expression(~italic(.(gene_word[1])) ~ .(labNames[1]))))
+  
   myBoxplot <- ggplot(df, aes(x = .data[[xCat]], y = .data[[gene]], fill = .data[[colorCatVar]])) + 
                geom_boxplot(outlier.shape = NA) +
                geom_point(position = position_jitterdodge(0.2))+
                scale_x_discrete(labels = c(tick_label_1, tick_label_2)) +
-               labs(x = x_catLabel, y = paste(gene_label," Expression")) +
+               labs(x = x_catLabel, y = y_axis_title,
+                    title = my_title) +
                scale_fill_manual(values = colorPalette2) +
-               ggtitle(paste(gene_label, " Exprsession by ",x_catLabel, "and ", x_filll_label)) +
+               #ggtitle(paste(gene_label, " Exprsession by ",x_catLabel, "and ", x_filll_label)) +
                myTheme
   myBoxplot
 }
@@ -181,7 +267,6 @@ createBoxplot(APOM_clean, "APOM", "icu_status", "sex", "Not Admited", "Admitted"
 ```{r}
 createScatterplot(APOM_clean, "APOM", "age", "Age (years)", "Age")
 ```
-
 
 Subset multiple genes for analysis
 
@@ -235,7 +320,7 @@ makePlots <- function(df, geneNames, x_Cont, xCat) {
   myBox <- createBoxplot(df, geneNames, x_cat, cat_col, "Not Admited", "Admitted","ICU Status", "Sex")
   
   #store the plots in a list
- plots <- list(myBox, myHist, myScatter)
+  plots <- list(myBox, myHist, myScatter)
  #plots <-ggpubr::ggarrange(myBox, myHist, myScatter, common.legend = F,nrow = 2,ncol = 2,
      #             labels = c("A","B", "C" ))
  plots
@@ -251,14 +336,13 @@ geneNames <- c("APOM","LCN2", "APOA2")
 
 
 ```{r}
-par(mfrow = c(3,3))
-# loop through the gene names and print all of the plots using makePlots function
-#gene_plots <- c()
 
-for(item in 1:length(geneNames)){
+# loop through the gene names and print all of the plots using makePlots function
+for(item in 1:length( geneNames)){
   gene_plots <- makePlots(gene_clean, geneNames[item], cont, categorical)
   print(gene_plots)
 }
-#ggpubr::ggarrange(gene_plots[1], gene_plots[2])
-#makePlots(gene_clean, "APOA2", cont, categorical)
+
 ```
+
+
