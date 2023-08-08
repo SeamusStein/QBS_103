@@ -129,7 +129,7 @@ ggplot(APOM_clean, aes(x = icu_status, y = APOM, fill = sex)) +
 createHistogram <- function(df, gene) {
     # create label pieces 
     gene_label <- c(gene)
-    labNames <- c('Frequency of Patients with', "Expression")
+    labNames <- c('Histogram of', "Expression")
     
     # create dynamic title 
     my_title <- eval(bquote(expression(.(labNames[1]) ~ italic(.(gene_label[1])) ~ .(labNames[2]))))
@@ -205,13 +205,7 @@ createBoxplot <- function(df, gene, xCat, colorCatVar, tick_label_1, tick_label_
 }
 ```
 
-```{r}
-#createBoxplot(APOM_clean, "APOM", "icu_status", "sex", "Not Admited", "Admitted","ICU Status", "Sex")
-```
 
-```{r}
-#createScatterplot(APOM_clean, "APOM", "age", "Age (years)", "Age")
-```
 
 ### Subset multiple genes for analysis
 
