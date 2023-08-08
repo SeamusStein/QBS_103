@@ -63,8 +63,8 @@ colorPalette<- c('#FCDCDC')
 # plot histogram of APOM expression 
 ggplot(metadata_APOM_expression, aes(x = APOM)) +
   geom_histogram(binwidth = 1, col = 'black', fill = colorPalette ) +
-  ggtitle(expression("Histogram of "~italic(APOM)~ " expression")) +
-  labs(x = expression(~italic(APOM)~ " Expression"), y = "Frequency of People") +
+  ggtitle(expression("Histogram of "~italic(APOM)~ " Expression")) +
+  labs(x = expression(~italic(APOM)~ " Expression"), y = "Frequency of Patients") +
   myTheme
 ```
 
