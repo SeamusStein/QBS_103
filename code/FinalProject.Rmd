@@ -122,6 +122,9 @@ ggplot(APOM_clean, aes(x = icu_status, y = APOM, fill = sex)) +
 
 # Presentation 2
 ## August 8, 2023
+```{r}
+summary(gene_subset)
+```
 
 ```{r}
 # function to create histogram. 
@@ -136,10 +139,21 @@ createHistogram <- function(df, gene) {
   
     #create dynamic x axis label
     my_x <- eval(bquote(expression(~ italic(.(gene_label[1])) ~ .(labNames[2]))))
+    
+    #calculate the median of the gene expression
+    med_expression <- median(df[,gene])
+    
+    # calculate the maximum gene expression
+    max_expression <- max(df[,gene])
     #create the histogram
     histogram <-  ggplot(df, aes(x = .data[[gene]])) +
-                        geom_histogram(binwidth = 1, col = 'black', fill = colorPalette ) +
+                        geom_histogram(binwidth = max_expression/100, col = 'black', fill = colorPalette ) +
                         labs(x = my_x, y = "Frequency of Patients", title = my_title) +
+                        geom_vline(xintercept = med_expression, linetype="solid",
+                                   color = "#7A9DFA",
+                                   linewidth = rel(1)) +
+                     #  annotate("text", x =  med_expression*1.5, y = max_expression *0.5,
+                             #  label = paste("Median = ", med_expression), color ='#7A9DFA') + 
                         myTheme
     # display histogram
     histogram 
@@ -198,7 +212,7 @@ createBoxplot <- function(df, gene, xCat, colorCatVar, tick_label_1, tick_label_
                scale_x_discrete(labels = c(tick_label_1, tick_label_2)) +
                labs(x = x_catLabel, y = y_axis_title,
                     title = my_title) +
-               scale_fill_manual(values = colorPalette2) +
+               scale_fill_manual(values = colorPalette2,name = "Sex", labels = c("Female", "Male")) +
                myTheme
   #display boxplot
   myBoxplot
@@ -255,6 +269,7 @@ makePlots <- function(df, geneNames, x_Cont, xCat) {
   # the categorical variable indicated by color fill
   cat_col = xCat[2]
   
+  
   # create the plots by calling functions
   myHist <- createHistogram(df, geneNames)
   myScatter <- createScatterplot(df, geneNames, x_Cont, "Age (years)", "Age")
@@ -278,17 +293,27 @@ geneNames <- c("APOM", "LCN2", "APOA2")
 
 
 ```{r}
-
 # loop through the gene names and print all of the plots using makePlots function
-for(item in 1:length( geneNames)){
+for(item in 1:length( geneNames)) {
   gene_plots <- makePlots(gene_clean, geneNames[item], continous_vars, categorical)
+  
   print(gene_plots)
 }
 
 ```
+categorical <- c("icu_status", "sex")
+continous_vars <- c("age")
+geneNames <- c("APOM", "LCN2", "APOA2")
+buildTableOne(gene_clean, geneNames, continous_vars, categorical)
+
+```{r}
+summary(gene_clean)
+```
+
 
 #### References
 https://stackoverflow.com/questions/31927984/using-italic-with-a-variable-in-ggplot2-title-expression
 https://www.appsloveworld.com/r/100/2/combining-paste-and-expression-functions-in-plot-labels
+https://statisticsglobe.com/add-mean-and-median-to-histogram-in-r
 
 
