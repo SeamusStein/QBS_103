@@ -122,9 +122,7 @@ ggplot(APOM_clean, aes(x = icu_status, y = APOM, fill = sex)) +
 
 # Presentation 2
 ## August 8, 2023
-```{r}
-summary(gene_subset)
-```
+
 
 ```{r}
 # function to create histogram. 
@@ -152,8 +150,8 @@ createHistogram <- function(df, gene) {
                         geom_vline(xintercept = med_expression, linetype="solid",
                                    color = "#7A9DFA",
                                    linewidth = rel(1)) +
-                     #  annotate("text", x =  med_expression*1.5, y = max_expression *0.5,
-                             #  label = paste("Median = ", med_expression), color ='#7A9DFA') + 
+                       #annotate("text", x =  med_expression*1.5, y = 0.5*max_expression,
+                    #           label = paste("Median = ", med_expression), color ='#7A9DFA') + 
                         myTheme
     # display histogram
     histogram 
@@ -305,15 +303,306 @@ categorical <- c("icu_status", "sex")
 continous_vars <- c("age")
 geneNames <- c("APOM", "LCN2", "APOA2")
 buildTableOne(gene_clean, geneNames, continous_vars, categorical)
-
 ```{r}
-summary(gene_clean)
+median(gene_clean$LCN2)
 ```
 
+### Part 3
+APOM Plots
+```{r}
+# define variables of interest to pass in the make plots function 
+categorical <- c("icu_status", "sex")
+continous_vars <- c("age")
+geneNames <- c("APOM")
+```
+
+
+```{r}
+# loop through the gene names and print all of the plots using makePlots function
+for(item in 1:length( geneNames)) {
+  gene_plots <- makePlots(gene_clean, geneNames[item], continous_vars, categorical)
+  
+  print(gene_plots)
+}
+```
+
+
+Create Table 1 
+```{r}
+gene_clean[, 'sex'] <- as.factor(gene_clean[, 'sex'])
+gene_clean[, 'icu_status'] <-as.factor(gene_clean[, 'icu_status'])
+str(gene_clean$sex)
+str(gene_clean$icu_status)
+levels(gene_clean$sex) <- c("Female", "Male")
+levels(gene_clean$icu_status) <- c("Not Admitted", "Admitted")
+```
+
+
+```{r}
+library(knitr)
+library(kableExtra)
+# This is function is from the QBS 103 class discussion 
+buildTableOne <- function(data,varList,nonnormVars = '',catVars = '') {
+  
+  # Define an empty table
+  table1 <- matrix(nrow = 0,ncol = 2)
+  # Keep track of rows to indent
+  indentRows <- c()
+  
+  # Loop through all variables
+  for (var in varList) {
+    
+    # Define vector of variable values
+    x <- data[,var]
+    
+    # Identify if non-normal
+    if (var %in% nonnormVars) {
+      
+      # Calculate individual values
+      myMedian <- round(median(x), digits = 2)
+      myIQR1 <- round(quantile(x,1/4),digits = 2)
+      myIQR2 <- round(quantile(x,3/4),digits = 2)
+      # Combine values
+      value <- paste0(myMedian,' [',myIQR1,', ',myIQR2,']')
+      
+      # Define new row
+      newRow <- c(paste0('**',var,'** Median [IQR]'),value)
+      
+      # Add row to data frame
+      table1 <- rbind(table1,newRow)
+      
+    }
+    
+    # Identify if categorical
+    if (var %in% catVars) {
+      
+      # Define new row for overall variable
+      newRow <- c(paste0('**',var,'** n (%)'),'')
+      # Add row to data frame
+      table1 <- rbind(table1,newRow)
+      
+      # Loop through levels of variable
+      for (level in levels(x)) {
+        # Calculate n and perc
+        n <- sum(x == level)
+        perc <- round(n/(length(x)) * 100,digits = 2)
+        
+        # Combine values
+        value <- paste0(n,' (',perc,')')
+        
+        # Define new row
+        newRow <- c(level,value)
+        # Add row to data frame
+        table1 <- rbind(table1,newRow)
+        # Add index to indented rows
+        indentRows <- c(indentRows,nrow(table1))
+        
+        
+      }
+    }
+    
+    # Otherwise treat as normally distributed
+    if (!(var %in% c(nonnormVars,catVars))) {
+      
+      # Calculate individual values
+      myMean <- round(mean(x),2)
+      mySD <- round(sd(x),2)
+      # Combine values
+      value <- paste0(myMean,' (',mySD,')')
+      
+      # Define new row
+      newRow <- c(paste0('**',var,'** Mean (sd)'),value)
+      
+      # Add row to data frame
+      table1 <- rbind(table1,newRow)
+      
+    }
+  }
+  
+  # Define sample size for heading
+  sampleSize <- paste("n =",nrow(data))
+  
+  # Print formatted table
+  kable(x = table1, caption = 'Table 1',
+       col.names = c("Variable",sampleSize),
+     align = c('l','r'),escape = T,row.names = F) %>%
+      add_indent(positions = indentRows) %>%
+      kable_classic()
+    
+  #return(table1)
+}
+```
+
+```{r}
+my_varList <- c("icu_status", 'sex', 'age', 'APOM', "LCN2", "APOA2")
+my_continous_vars <- c( 'APOM', "LCN2", "APOA2")
+my_catVars <- c("sex", "icu_status")
+```
+
+```{r}
+
+```
+
+```{r}
+# Account for age being NA 
+gene_clean <- gene_clean %>% 
+      filter(!is.na(age))
+
+#summary(gene_clean)
+```
+
+
+```{r}
+ buildTableOne(gene_clean, my_varList, my_continous_vars, my_catVars)
+#write.csv(my_table1, file = "table1.csv")
+```
+
+#### Generate the Heatmap for 10 genes
+
+```{r}
+# subset 10 genes . 
+heat_map_genes <- gene_expression[c("APOM", "APOA2","LCN2", "APOA1", "MPO", "BPI","DEFA1", "DEFA4","PRTN3", "CTSG"),]
+# apply transform to make the rows into colmnns 
+heat_map_genes <- as.data.frame(t(heat_map_genes))
+head(heat_map_genes)
+
+```
+
+```{r}
+# Link metadata to gene subset data
+heat_map_gene_metadata <- cbind(meta_data, heat_map_genes)
+head(heat_map_gene_metadata)
+
+```
+
+```{r}
+# convert unknown sex to NA
+heat_map_gene_metadata$sex <- if_else(heat_map_gene_metadata$sex == " unknown", NA, heat_map_gene_metadata$sex)
+
+```
+
+```{r}
+# convert character age to numeric
+heat_map_gene_metadata$age <- as.numeric(heat_map_gene_metadata$age)
+head(heat_map_gene_metadata)
+
+# Account for age being NA heat clean is the clean data for heatmap
+heat_clean <- heat_map_gene_metadata %>% 
+      filter(!is.na(age))
+```
+
+
+```{r}
+head(heat_clean)
+```
+```{r}
+# create a subset of the genes for the heatmap
+my_genes <- c("APOM", "APOA2","LCN2", "APOA1", "MPO", "BPI","DEFA1", "DEFA4","PRTN3", "CTSG")
+gene_heatmap_data <-heat_clean[,my_genes]
+head(gene_heatmap_data)
+```
+```{r}
+# transpose the matrix
+gene_heatmap_data <- t(gene_heatmap_data)
+```
+
+```{r}
+library(pheatmap)
+
+trackingBars <- data.frame(row.names = colnames(gene_heatmap_data),
+                             'ICU Status' = heat_clean$icu_status,
+                              'Sex' = heat_clean$sex)
+
+
+
+annotationColors <- list(Status = c('no' = 'purple',
+                                    'yes' = 'green'))
+#my_colors = list(
+ #   Sex = c(female = "#5977ff", male = "#f74747")
+#)
+
+# how many subjects to include 
+pheatmap(gene_heatmap_data[,1:20],
+         clustering_distance_rows  = 'euclidean',
+         clustering_distance_cols  = 'euclidean',
+         annotation_col = trackingBars,
+         annotation_colors = annotationColors, 
+         main = "Gene Expression Heatmap")
+```
+
+### Raincloud Plot
+In this section, I will use the gene_clean subset for the 3 genes
+```{r}
+library(ggdist)
+```
+```{r}
+noLegendTheme <- theme(
+  panel.border = element_blank(), panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(), 
+  # define axis
+  axis.line = element_line(colour = "black", linewidth = rel(1)),
+  # plot background
+  plot.background = element_rect(fill = "white"),
+  panel.background = element_blank(),
+ 
+  # remove legend
+  legend.position = 'none',
+  
+  # font
+  text = element_text(family = 'Georgia', size = 14 ), 
+  
+  # center titles
+  plot.title = element_text(hjust = 0.5)
+
+)
+```
+
+
+```{r}
+# A rain cloud plot uses ggplot2 and adds a density plot and a box plot with jitters
+gene_clean %>% 
+  ggplot(aes(x = icu_status, y = APOM, fill = icu_status)) +
+  # add density layer
+  stat_halfeye(
+    adjust = 0.5,
+    # change height of density so they do not interfere
+    width = .6,
+    
+    #move curve to the right
+    justification = -0.2,
+    
+    #remove default interval for cleaner look
+    .width = 0,
+    point_colour = NA ,
+  
+  ) +
+  geom_boxplot(
+    width = 0.12,
+    outlier.color = NA,
+    alpha = 0.5
+  ) +
+  geom_point(aes(color = icu_status),
+            position = position_jitterdodge(0.2),
+            size = 1.4,
+            alpha = 0.3,
+            width = 0.09) +
+
+  
+  coord_flip() +
+  labs(x = "ICU Status", y  = expression(~italic(APOM)~ " Expression"),
+       title =  expression(~italic(APOM)~ " Expression by ICU Status")) +
+  scale_fill_manual(values = colorPalette2) + 
+  noLegendTheme 
+
+```
 
 #### References
 https://stackoverflow.com/questions/31927984/using-italic-with-a-variable-in-ggplot2-title-expression
 https://www.appsloveworld.com/r/100/2/combining-paste-and-expression-functions-in-plot-labels
 https://statisticsglobe.com/add-mean-and-median-to-histogram-in-r
+https://www.biostars.org/p/285370/
+https://statsandr.com/blog/graphics-in-r-with-ggplot2/
+
+
 
 
