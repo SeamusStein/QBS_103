@@ -150,8 +150,6 @@ createHistogram <- function(df, gene) {
                         geom_vline(xintercept = med_expression, linetype="solid",
                                    color = "#7A9DFA",
                                    linewidth = rel(1)) +
-                       #annotate("text", x =  med_expression*1.5, y = 0.5*max_expression,
-                    #           label = paste("Median = ", med_expression), color ='#7A9DFA') + 
                         myTheme
     # display histogram
     histogram 
@@ -300,8 +298,10 @@ for(item in 1:length( geneNames)) {
 ```
 
 
-### Part 3
-APOM Plots
+### Presentation 3
+### August 22, 2023
+
+#### APOM Plots
 ```{r}
 # define variables of interest to pass in the make plots function 
 categorical <- c("icu_status", "sex")
@@ -378,7 +378,7 @@ for(item in 1:length( geneNames)) {
 ```
 
 
-Create Table 1 
+#### Create Table 1 
 ```{r}
 gene_clean[, 'sex'] <- as.factor(gene_clean[, 'sex'])
 gene_clean[, 'icu_status'] <-as.factor(gene_clean[, 'icu_status'])
@@ -403,6 +403,10 @@ gene_clean$lactate.mmol.l. <- as.integer(gene_clean$lactate.mmol.l.)
 library(knitr)
 library(kableExtra)
 # This is function is from the QBS 103 class discussion 
+# df = the data frame, my_vars is the list of all variables in the plot
+#not notNormContVariables are not normal continuous vars resulting in median and IQR
+# cat_var_list are the categorical variable subset where we want n and % values
+
 makeTableOne <- function(df,my_vars,notNormContVar = '',cat_var_list = '') {
   
   # Define an empty table
@@ -488,9 +492,9 @@ makeTableOne <- function(df,my_vars,notNormContVar = '',cat_var_list = '') {
        col.names = c("Variable",sampleSize),
        align = c('l','r'),escape = T,row.names = F) %>%
        add_indent(positions = row_indented) %>%
-       kable_classic()
+      kable_classic()
     
- # return(table_one)
+  #return(table_one)
 }
 ```
 
@@ -513,6 +517,7 @@ gene_clean <- gene_clean %>%
 
 
 ```{r}
+# produce Table 1 
 makeTableOne(gene_clean, my_varList, my_continous_vars, my_catVars)
 #write.csv(table_one, file = "table1.csv")
 ```
@@ -574,27 +579,40 @@ trackingBars <- data.frame(row.names = rownames(gene_heatmap_data),
                               'Sex' = heat_clean$sex)
 
 
-#annotation_colors = list(sex = c(female="blue", male="green"), icu_status = c(no="yellow", yes = "purple"))
 # define the annotation colors
-annotation_colors <- list('ICU Status' = c('no' = 'green',
-                                   'yes' = 'red'))
-#my_colors = list(
- #   Sex = c(female = "#5977ff", male = "#f74747")
-#)
+annotation_colors <- list('ICU Status' = c(' no' = 'green', ' yes' = 'pink'),
+                          'Sex' = c(' female' =   "blue", ' male' = "red"))
 
-# plot heatmap of 10 genes  
-pheatmap(gene_heatmap_data,
+# plot heat map of 10 genes ln transformed (add 0.1 since can't take log of 0).
+pheatmap(log(gene_heatmap_data + 0.1),
          clustering_distance_rows  = 'euclidean',
          clustering_distance_cols  = 'euclidean',
          annotation_row  = trackingBars,
          annotation_colors = annotation_colors,
          show_rownames = F,
-         main = "Gene Expression Heatmap") 
+         main = "Gene Expression Heatmap\nln(Gene Expression)")
+
 ```
 ```{r}
 
 # summary stats of DEFA4 gene based on the heatmap
 summary(gene_heatmap_data$DEFA4)
+summary(gene_heatmap_data$LCN2)
+summary(gene_heatmap_data$DEFA1)
+defa1_max <- max(gene_heatmap_data$DEFA1)
+log(defa1_max)
+```
+```{r}
+max(gene_heatmap_data$LCN2) - min(gene_heatmap_data$LCN2)
+min(gene_heatmap_data$LCN2)
+```
+```{r}
+#calculate DEFA4 expression range from min to max for analysis
+max(gene_heatmap_data$DEFA4) - min(gene_heatmap_data$DEFA4)
+```
+```{r}
+#calculate DEFA4 expression maximum for analysis
+max(gene_heatmap_data$DEFA4)
 ```
 
 ### Raincloud Plot
@@ -628,6 +646,7 @@ noLegendTheme <- theme(
 
 ```{r}
 # A rain cloud plot uses ggplot2 and adds a density plot and a box plot with jitters
+# Adapted from https://statsandr.com/blog/graphics-in-r-with-ggplot2/ with the parameter recommendations
 APOM_rain_cloud <- gene_clean %>% 
   ggplot(aes(x = icu_status, y = APOM, fill = icu_status)) +
   # add density layer
@@ -643,23 +662,24 @@ APOM_rain_cloud <- gene_clean %>%
     .width = 0,
     point_colour = NA ,
   
-  ) +
+  ) + #modify boxplot parameters
   geom_boxplot(
     width = 0.12,
     outlier.color = NA,
     alpha = 0.5
-  ) +
+  ) + #modify point parameters
   geom_point(aes(color = icu_status),
             position = position_jitterdodge(0.2),
             size = 1.4,
             alpha = 0.3,
             width = 0.09) +
 
-  
+  # flip the coordinates
   coord_flip() +
   labs(x = "ICU Status", y  = expression(~italic(APOM)~ " Expression"),
        title =  expression(~italic(APOM)~ " Expression by ICU Status")) +
   scale_fill_manual(values = colorPalette2) + 
+  #use theme with no legend
   noLegendTheme 
 
 
@@ -667,6 +687,7 @@ APOM_rain_cloud
 ```
 ```{r}
 # A rain cloud plot uses ggplot2 and adds a density plot and a box plot with jitters
+# function to make a raincloud plot with ICU status as a categorical variable given data frame and gene
 make_raincloud <- function(df, gene){
    # create label pieces 
     gene_label <- c(gene)
@@ -676,7 +697,7 @@ make_raincloud <- function(df, gene){
     my_title <- eval(bquote(expression(italic(.(gene_label[1])) ~ .(labNames[1])~ .(labNames[2]))))
   
     #create dynamic y axis label
-    my_y <- eval(bquote(expression(~ italic(.(gene_label[1])) ~ .(labNames[1]))))
+    my_y_lab<- eval(bquote(expression(~ italic(.(gene_label[1])) ~ .(labNames[1]))))
   
   
   APOM_rain_cloud <- gene_clean %>% 
@@ -694,7 +715,7 @@ make_raincloud <- function(df, gene){
     .width = 0,
     point_colour = NA ,
   
-  ) +
+  ) + # modify geom_boxplot parameters
   geom_boxplot(
     width = 0.12,
     outlier.color = NA,
@@ -704,12 +725,13 @@ make_raincloud <- function(df, gene){
             position = position_jitterdodge(0.2),
             size = 1.4,
             alpha = 0.3) +
-
-  
+# flip the coordinates
   coord_flip() +
-  labs(x = "ICU Status", y  = my_y,
+    
+  labs(x = "ICU Status", y  = my_y_lab,
        title = my_title) +
   scale_fill_manual(values = colorPalette2) + 
+  #use theme with no legend
   noLegendTheme 
 
 
