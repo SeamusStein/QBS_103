@@ -571,6 +571,7 @@ head(heat_clean)
 ```
 
 ```{r}
+# This code was adapted from QBS 103 class activity/lecture
 library(pheatmap)
 
 # define the tracking bars
